@@ -3,7 +3,8 @@ from models.nb_model import NB_Model
 from dataset import CambridgeDataset
 from callback import NB_Callback
 
-load_model = '/content/saved'
+load_model = ''
+dataset_path = ''
 
 ############### Hyper Parameters ####################
 
@@ -29,7 +30,7 @@ sr = 44100
 ################### Dataset ####################
 
 # refer to CambridgeDataset for more information
-dataset = CambridgeDataset(chunk_path="/content/drive/My Drive/Datasets/VoxVerified/", 
+dataset = CambridgeDataset(chunk_path=dataset_path, 
                             chunk_limit=0, # REMOVE LIMIT if you want to load everything
                             train_val_split=0.8,
                             resamp=False)
