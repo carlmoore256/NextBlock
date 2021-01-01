@@ -1,4 +1,5 @@
 from tensorflow.keras.models import save_model
+from tensorflow.keras.models import load_model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint
 import models.unet_fft as unet_fft
@@ -10,7 +11,7 @@ class NB_Model():
                 learning_rate,
                 loss='mse', 
                 model_dir='./saved/', 
-                chkpoint_dir='/tmp/checkpoint', 
+                chkpoint_dir='/tmp/checkpoint',
                 save_checkpoints=True):
 
         self.input_shape = input_shape
@@ -19,11 +20,20 @@ class NB_Model():
         self.loss = loss
         self.save_checkpoints = save_checkpoints
         self.checkpoint = ModelCheckpoint(
-            chkpoint_dir, monitor='val_loss', verbose=1, save_best_only=False)
+            chkpoint_dir,
+            monitor='val_loss',
+            verbose=1,
+            save_freq=1000,
+            save_best_only=True)
 
 
     def save(self):
         save_model(self.model, self.model_dir)
+
+    def load(self, path, lr):
+        print(f"loading model {path}")
+        self.model = load_model(path)
+        self.compile(lr, self.loss)
 
     def compile(self, lr, loss='mse', metrics=['mse']):
         self.optimizer = Adam(lr)

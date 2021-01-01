@@ -3,6 +3,8 @@ from models.nb_model import NB_Model
 from dataset import CambridgeDataset
 from callback import NB_Callback
 
+load_model = '/content/saved'
+
 ############### Hyper Parameters ####################
 
 batch_size = 32
@@ -28,7 +30,7 @@ sr = 44100
 
 # refer to CambridgeDataset for more information
 dataset = CambridgeDataset(chunk_path="/content/drive/My Drive/Datasets/VoxVerified/", 
-                            chunk_limit=30, # REMOVE LIMIT if you want to load everything
+                            chunk_limit=0, # REMOVE LIMIT if you want to load everything
                             train_val_split=0.8,
                             resamp=False)
 
@@ -52,14 +54,18 @@ nb_model = NB_Model(input_shape=[block_size//2,2],
                     chkpoint_dir='/tmp/checkpoint/')
 
 # create a u-net model for making inference on fft training data
-nb_model.create_unet_fft(
-                    lr=learning_rate, 
-                    filters=512, # num filters on input & output layers
-                    kernel_size=kernel_size, 
-                    bottleneck=8, # size of the network's latent dimension
-                    use_bias=False, 
-                    strides=2, 
-                    activation='tanh')
+
+if load_model == '':
+  nb_model.create_unet_fft(
+                      lr=learning_rate, 
+                      filters=512, # num filters on input & output layers
+                      kernel_size=kernel_size, 
+                      bottleneck=8, # size of the network's latent dimension
+                      use_bias=False, 
+                      strides=2, 
+                      activation='tanh')
+else:
+  nb_model.load(load_model, learning_rate)
 
 ################## Training Callbacks ####################
 
