@@ -100,10 +100,3 @@ class CambridgeDataset():
       idx = np.random.randint(0,len(d)-window_size-1)
       output_arr.append(d[idx:idx+window_size])
     return np.asarray(output_arr)
-
-
-  # train_data, val_data = create_dataset(
-  #     split=0.8,
-  #     resamp=False,
-  #     sr_orig=44100,
-  #     sr_new=16000)

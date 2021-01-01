@@ -1,8 +1,10 @@
 from tensorflow.keras.callbacks import Callback
 from tensorflow.audio import encode_wav
 from tensorflow.io import write_file
+from tensorflow import expand_dims
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 
 class NB_Callback(Callback):
     def __init__(self, 
@@ -21,6 +23,10 @@ class NB_Callback(Callback):
         self.num_tests = num_tests
         self.samplerate = samplerate
         self.save_audio = save_audio
+        self.save_audio_dir = save_audio_dir
+        if save_audio:
+            Path(save_audio_dir).mkdir(parents=True, exist_ok=True)
+
         self.test_interval = test_interval
         self.interval_count = 0
         
@@ -60,10 +66,14 @@ class NB_Callback(Callback):
             plt.show()
 
             if self.save_audio:
+                print(x_frames.shape)
+                print(y_frames.shape)
+                print(yp_frames.shape)
+                print(x_yp.shape)
                 self.save_audio_clip(x_frames[i,:], self.save_audio_dir, f"e{epoch}_{i}_input_samp_.wav")
                 self.save_audio_clip(y_frames[i,:], self.save_audio_dir, f"e{epoch}_{i}_ground_truth.wav")
                 self.save_audio_clip(yp_frames[i,:], self.save_audio_dir, f"e{epoch}_{i}_predicted.wav")
-                self.save_audio_clip(x_yp[i,:], self.save_audio_dir, f"e{epoch}_{i}_input_pred_combined.wav")
+                self.save_audio_clip(x_yp, self.save_audio_dir, f"e{epoch}_{i}_input_pred_combined.wav")
           
           plt.title('loss', color='white')
           plt.plot(np.asarray(self.losses))
@@ -80,5 +90,6 @@ class NB_Callback(Callback):
         return
 
     def save_audio_clip(self, samples, path, name):
-        audio = encode_wav(samples, self.sample_rate)
-        write_file(f'{path}/{name}.wav', audio)
+        samples = expand_dims(samples, -1)
+        audio = encode_wav(samples, self.samplerate)
+        write_file(f'{path}/{name}', audio)
