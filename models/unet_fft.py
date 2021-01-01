@@ -1,7 +1,7 @@
 
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.models import Conv1D, Conv1DTranspose, Activation, BatchNormalization, Input, Concatenate
+from tensorflow.keras.layers import Conv1D, Conv1DTranspose, Activation, BatchNormalization, Input, Concatenate
 
 
 

@@ -1,7 +1,7 @@
 from tensorflow.keras.models import save_model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint
-import unet_fft
+import models.unet_fft as unet_fft
 
 class NB_Model():
 
@@ -43,8 +43,8 @@ class NB_Model():
         print(self.model.summary())
 
     def fit(self, generators, epochs, callbacks=[]):
-        train_gen = generators.train_gen
-        val_gen = generators.val_gen
+        train_gen = generators.train_DG
+        val_gen = generators.val_DG
 
         if self.save_checkpoints:
             callbacks.append(self.checkpoint)
