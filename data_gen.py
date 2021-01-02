@@ -47,7 +47,7 @@ import tensorflow as tf
 import numpy as np
 
 class DataGenerator():
-    def __init__(self, batch_size, block_size, channels, data, hop_ratio=2, y_offset=1):
+    def __init__(self, batch_size, block_size, channels, data, hop_ratio=2, y_offset=1, normalize=True):
       self.batch_size = batch_size
       self.block_size = block_size
       self.channels = channels
@@ -58,6 +58,7 @@ class DataGenerator():
       self.y_offset = y_offset
       self.dataset_index = 0
       self.num_examples = self.data.shape[0]
+      self.normalize=normalize
 
     def load_audio(self, dir):
       # tensorflow read file (can read any file)  
@@ -71,7 +72,17 @@ class DataGenerator():
     # waveform audio -> FFT (tf.complex64 dtype)
     def fft(self, audio):
       fft = tf.signal.fft(audio)
+      if self.normalize:
+        fft = self.normalize_fft(fft)
       return fft
+
+    def normalize_fft(self, fft):
+      scalar = 1.0/self.block_size
+      normalized_fft = tf.math.multiply(fft, scalar)
+      return normalized_fft
+
+    def reverse_normalize_fft(self, normalized_fft):
+      return normalized_fft * self.block_size
 
     # x + y(i) -> magnitude, angle
     def rectangular_to_polar(self, rectangular):
@@ -116,6 +127,8 @@ class DataGenerator():
 
     # prediction in complex notation -> audio tensor
     def ifft_prediction(self, complex_prediction): 
+      if self.normalize:
+        complex_prediction = self.reverse_normalize_fft(complex_prediction)
       ifft = tf.signal.ifft(complex_prediction)
       pred_audio = tf.cast(ifft, dtype=tf.float32)
       # pred_audio = self.overlap_add(pred_audio)
