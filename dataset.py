@@ -100,3 +100,5 @@ class CambridgeDataset():
       idx = np.random.randint(0,len(d)-window_size-1)
       output_arr.append(d[idx:idx+window_size])
     return np.asarray(output_arr)
+
+# Class MemmapCambridgeDataset():

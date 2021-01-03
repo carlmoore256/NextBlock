@@ -59,6 +59,7 @@ class DataGenerator():
       self.dataset_index = 0
       self.num_examples = self.data.shape[0]
       self.normalize=normalize
+      self.scaling_factor = 100 # compresses fft using tanh
 
     def load_audio(self, dir):
       # tensorflow read file (can read any file)  
@@ -77,12 +78,18 @@ class DataGenerator():
       return fft
 
     def normalize_fft(self, fft):
-      scalar = 1.0/self.block_size
+      scalar = 1.0/(self.block_size * 2)
       normalized_fft = tf.math.multiply(fft, scalar)
       return normalized_fft
 
     def reverse_normalize_fft(self, normalized_fft):
       return normalized_fft * self.block_size
+
+    def compress_fft(self, fft):
+      return tf.math.tanh(fft * self.scaling_factor)
+
+    def decompress_fft(self, fft):
+      return tf.math.tanh(fft * self.scaling_factor)
 
     # x + y(i) -> magnitude, angle
     def rectangular_to_polar(self, rectangular):
@@ -147,6 +154,10 @@ class DataGenerator():
       frames = tf.cast(frames, dtype=tf.complex64)
       # cut mirror
       fft = tf.signal.fft(frames)[:, :frames.shape[1]//2]
+
+      if self.normalize:
+        fft = self.normalize_fft(fft)
+
       fft = tf.expand_dims(fft, axis=2)
       fft_tensor = self.complex_to_ri(fft)
       if center_fft:
@@ -158,6 +169,10 @@ class DataGenerator():
       if decenter_fft:
         fft_tensor = self.de_center_data(fft_tensor)
       complex_tensor = self.ri_to_complex(fft_tensor)
+
+      if self.normalize:
+        complex_tensor = self.reverse_normalize_fft(complex_tensor)
+
       ifft = tf.signal.ifft(complex_tensor)
       frames = tf.cast(ifft, dtype=tf.float32)
       return frames
