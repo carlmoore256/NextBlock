@@ -78,7 +78,7 @@ class DataGenerator():
       return fft
 
     def normalize_fft(self, fft):
-      scalar = 1.0/(self.block_size * 2)
+      scalar = 1.0/(self.block_size // 2)
       normalized_fft = tf.math.multiply(fft, scalar)
       return normalized_fft
 
