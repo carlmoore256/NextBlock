@@ -1,3 +1,6 @@
 optimize.py
 .DS_Store
 preprocessing.py
+__pycache__
+training_clips
+.vscode/
