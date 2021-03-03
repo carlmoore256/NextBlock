@@ -52,7 +52,6 @@ class DataGenerator():
       self.block_size = block_size
       self.channels = channels
       self.hop = block_size//hop_ratio
-      self.hop_ratio = hop_ratio
       self.data = data
       self.win = tf.signal.hann_window(self.block_size)
       self.y_offset = y_offset

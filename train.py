@@ -2,37 +2,57 @@ from data_gen import DataGenerator, Generators
 from models.nb_model import NB_Model
 from dataset import CambridgeDataset
 from callback import NB_Callback
+import argparse
 
-load_model = ''
-dataset_path = ''
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("-dataset", type=str, default='E:/Datasets/VoxVerified', help="path to dataset")
+parser.add_argument("-model", type=str, default='', help="path to existing model to load")
+parser.add_argument("-b", type=int, default=32, help="batch size")
+parser.add_argument("-k", type=int, default=9, help="kernel size")
+parser.add_argument("-e", type=int, default=100, help="epochs")
+parser.add_argument("-lr", type=float, default=1e-4, help="learning rate")
+parser.add_argument("-sr", type=int, default=44100, help="samplerate")
+
+parser.add_argument("-blocksize", type=int, default=32, help="audio block size")
+parser.add_argument("-hopratio", type=int, default=32, help="hop size as ratio, hop in samples = block size / hop")
+parser.add_argument("-predictoffset", type=int, default=1, help="number of hops ahead for model to predict during training")
+
+args = parser.parse_args()
+
+
+
+load_model = args.model
+dataset_path = args.dataset
 
 ############### Hyper Parameters ####################
 
-batch_size = 32
-num_epochs = 100
-learning_rate = 1e-4
-block_size = 512
+batch_size = args.b
+num_epochs = args.e
+learning_rate = args.lr
+block_size = args.blocksize
 
 ############## Training Parameters ##################
 
-hop_ratio = 2
-kernel_size = 9
+hop_ratio = args.hopratio
+kernel_size = args.k
 
 # how far ahead to predict a block of audio, given input X
 # value is expressed in how many hops ahead to predict:
 # offset = (block_size/hop_ratio) * y_offset
-prediction_offset = 1
+prediction_offset = args.predictoffset
 
 # this model uses a full samplerate for real-time applications
 # in which downsampling/upsampling latency is impractical
-sr = 44100
+sr = args.sr
 
 ################### Dataset ####################
 
 # refer to CambridgeDataset for more information
 dataset = CambridgeDataset(chunk_path=dataset_path, 
-                            chunk_limit=0, # REMOVE LIMIT if you want to load everything
                             train_val_split=0.8,
+                            chunk_limit=0;
                             resamp=False)
 
 ################## Generators ####################

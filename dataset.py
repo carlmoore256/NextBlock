@@ -36,7 +36,11 @@ class CambridgeDataset():
   # Load all chunks, or set a limit if impatient or short on RAM
   def LoadDataChunks(self, path, shuffle=True, limit=0):
     chunks = []
-    files = glob.glob(path+"*.npy")
+    files = glob.glob(path+"/*.npy")
+    print(f'path {path}')
+    print(f"len of files {len(files)}")
+    print("DOING SOMETHING!")
+
     random.shuffle(files)
     if limit == 0:
       limit = len(files)-1
