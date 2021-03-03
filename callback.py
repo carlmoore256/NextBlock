@@ -41,9 +41,9 @@ class NB_Callback(Callback):
         return
  
     def on_epoch_end(self, epoch, logs={}):
-        if self.interval_count % self.test_interval == 0:
-          plots = threading.Thread(target=plot_async, daemon=True)
-        self.interval_count += 1
+        # if self.interval_count % self.test_interval == 0:
+        #   plots = Thread(target=self.plot_async, daemon=True)
+        # self.interval_count += 1
         return
  
     def on_batch_begin(self, batch, logs={}):
@@ -59,7 +59,7 @@ class NB_Callback(Callback):
         write_file(f'{path}/{name}', audio)
 
     # plots current results on-screen asyncronously, allowing training to continue in bg
-    def plot_async():
+    def plot_async(self):
         x, y = next(self.dataGen.generate())
         y_p = self.model.predict(x)
         x_frames = self.dataGen.fft_tensor_to_frames(x, decenter_fft=True)

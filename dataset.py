@@ -20,29 +20,30 @@ import matplotlib.pyplot as plt
 class CambridgeDataset():
 
   def __init__(self, 
-              chunk_path, 
-              chunk_limit, 
+              chunk_path,
               train_val_split=0.8, 
               resamp=False, 
               sr_orig=44100,
               sr_new=16000):
 
-    chunks = self.LoadDataChunks(
-      chunk_path, shuffle=True, limit=chunk_limit)
+    chunks = self.load_data_chunks(
+      chunk_path, shuffle=True)
 
-    self.train_data, self.val_data = self.create_dataset(
+    self.train_data, self.val_data = self.dataset_from_chunks(
       chunks, train_val_split, resamp, sr_orig, sr_new)
 
   # Load all chunks, or set a limit if impatient or short on RAM
-  def LoadDataChunks(self, path, shuffle=True, limit=0):
-    chunks = []
+  def load_data_chunks(self, path, shuffle=True, limit=0):
     files = glob.glob(path+"/*.npy")
-    print(f'path {path}')
-    print(f"len of files {len(files)}")
-    print("DOING SOMETHING!")
+    assert(len(files)>0)
+    print(f"num chunks found: {len(files)}")
 
-    random.shuffle(files)
-    if limit == 0:
+    if shuffle:
+      random.shuffle(files)
+      
+    chunks = []
+
+    if limit < 1:
       limit = len(files)-1
     for filename in files[:limit]:
         print(f"loading {filename}")
@@ -52,7 +53,7 @@ class CambridgeDataset():
     return chunks
 
   # create numpy datasets (TF version in the works)
-  def create_dataset(self, data_chunks, split=0.8, resamp=False, 
+  def dataset_from_chunks(self, data_chunks, split=0.8, resamp=False, 
                     sr_orig=44100, sr_new=16000):
     samp_count = []
     for a in data_chunks:

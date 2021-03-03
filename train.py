@@ -52,7 +52,6 @@ sr = args.sr
 # refer to CambridgeDataset for more information
 dataset = CambridgeDataset(chunk_path=dataset_path, 
                             train_val_split=0.8,
-                            chunk_limit=0;
                             resamp=False)
 
 ################## Generators ####################
