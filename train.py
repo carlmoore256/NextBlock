@@ -18,6 +18,7 @@ parser.add_argument("-sr", type=int, default=44100, help="samplerate")
 parser.add_argument("-blocksize", type=int, default=32, help="audio block size")
 parser.add_argument("-hopratio", type=int, default=32, help="hop size as ratio, hop in samples = block size / hop")
 parser.add_argument("-predictoffset", type=int, default=1, help="number of hops ahead for model to predict during training")
+parser.add_argument("-normalize", type=bool, default=True, help="normalize fft to 1/fftsize")
 
 args = parser.parse_args()
 
@@ -50,7 +51,7 @@ sr = args.sr
 ################### Dataset ####################
 
 # refer to CambridgeDataset for more information
-dataset = CambridgeDataset(chunk_path=dataset_path, 
+dataset = CambridgeDataset(dataset_path=dataset_path, 
                             train_val_split=0.8,
                             resamp=False)
 
@@ -60,8 +61,9 @@ dataset = CambridgeDataset(chunk_path=dataset_path,
 generators = Generators(dataset, 
                         batch_size, 
                         block_size, 
-                        hop_ratio, 
-                        prediction_offset)
+                        hop_ratio,
+                        prediction_offset,
+                        args.normalize)
 
 ################## Build Model ####################
 

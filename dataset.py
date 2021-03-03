@@ -10,31 +10,77 @@
 # Currently the design is a bit messy, but I intend to clean everything up
 # ============================================================================
 
+import matplotlib.pyplot as plt
 import numpy as np
 import resampy
-import glob
 import random
-# import IPython.display as ipd
-import matplotlib.pyplot as plt
+import glob
+import os
 
 class CambridgeDataset():
 
   def __init__(self, 
-              chunk_path,
+              dataset_path,
               train_val_split=0.8, 
               resamp=False, 
               sr_orig=44100,
               sr_new=16000):
 
-    chunks = self.load_data_chunks(
-      chunk_path, shuffle=True)
+    self.map_train = None
+    self.map_val = None
 
-    self.train_data, self.val_data = self.dataset_from_chunks(
-      chunks, train_val_split, resamp, sr_orig, sr_new)
+    # automatically selects for memmap of npy directories          
+    memmap_files = self.get_directory_files(dataset_path, "memmap")
+    npy_files = self.get_directory_files(dataset_path, "npy")
+
+    print(f'\n memmap files found {memmap_files}')
+    print(f'npy files found {npy_files}\n')
+
+    # loads the cambridge dataset from a memmap (preferred method)
+    if len(memmap_files) > 0:
+      # eventually implement better way to do this
+      train_mmap_file = self.filter_file_list(memmap_files, "data_train")
+      val_mmap_file = self.filter_file_list(memmap_files, "data_val")
+
+      print(f'using {train_mmap_file} for train data')
+      print(f'using {val_mmap_file} for validation data\n')
+
+      self.train_data = np.memmap(train_mmap_file, dtype="float32", mode="r")
+      self.val_data = np.memmap(val_mmap_file, dtype="float32", mode="r")
+
+      print(f'training on {((len(self.train_data)/sr_orig)/60)/60} hrs of audio')
+      print(f'validating on {((len(self.val_data)/sr_orig)/60)/60} hrs of audio\n')
+      # get the map to the memmap which provides indicies
+      self.map_train = np.load(self.filter_file_list(npy_files, "map_train"))
+      self.map_val = np.load(self.filter_file_list(npy_files, "map_val"))
+
+      print(f'train memmap examples {self.map_train.shape}')
+      print(f'val memmap examples {self.map_val.shape}\n')
+
+    else: # if we're loading chunks (deprecated)
+      chunks = self.load_data_chunks(
+        dataset_path, shuffle_chunks=True)
+
+      self.train_data, self.val_data = self.dataset_from_chunks(
+        chunks, train_val_split, resamp, sr_orig, sr_new)
+
+  # return the first closest match to filter from a list of files
+  def filter_file_list(self, files, search_term):
+    filtered = filter(lambda a: search_term in a, files)
+    ffl = list(filtered)
+    assert len(ffl) > 0, f'failed loading dataset, no matches in {files} ending with {search_term}'
+    if len(ffl) > 1:
+      print(f'found more than 1 file for {ffl}, choosing {ffl[0]} \n \
+            only one memmap per split supported')
+    return ffl[0]
+
+  # returns all files of type extension in the given directory
+  def get_directory_files(self, path, extension):
+    return glob.glob(f"{path}/*.{extension}")
 
   # Load all chunks, or set a limit if impatient or short on RAM
-  def load_data_chunks(self, path, shuffle=True, limit=0):
-    files = glob.glob(path+"/*.npy")
+  def load_data_chunks(self, path, shuffle_chunks=True, limit=0):
+    files = self.get_directory_files(path, "npy")
     assert(len(files)>0)
     print(f"num chunks found: {len(files)}")
 

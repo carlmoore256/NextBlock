@@ -47,7 +47,7 @@ import tensorflow as tf
 import numpy as np
 
 class DataGenerator():
-    def __init__(self, batch_size, block_size, channels, data, hop_ratio=2, y_offset=1, normalize=True):
+    def __init__(self, batch_size, block_size, channels, data, hop_ratio=2, y_offset=1, normalize=True, memmap_map=None):
       self.batch_size = batch_size
       self.block_size = block_size
       self.channels = channels
@@ -56,9 +56,24 @@ class DataGenerator():
       self.win = tf.signal.hann_window(self.block_size)
       self.y_offset = y_offset
       self.dataset_index = 0
-      self.num_examples = self.data.shape[0]
       self.normalize=normalize
       self.scaling_factor = 100 # compresses fft using tanh
+      self.memmap_map = memmap_map
+
+      # if we're using a memmap, we need to set this flag
+      if memmap_map is not None:
+        self.using_memmap = True
+      else:
+        self.using_memmap = False
+
+      # memmap map stores indexes of examples, therefore its length
+      # provides the number of examples
+      if self.using_memmap:
+        self.num_examples = self.memmap_map.shape[0]
+      else: # otherwise it's just a big block of data in a np array
+        self.num_examples = self.data.shape[0]
+
+
 
     def load_audio(self, dir):
       # tensorflow read file (can read any file)  
@@ -226,37 +241,80 @@ class DataGenerator():
     def reset_generator(self):
       self.dataset_index = 0
 
-    # main generator function for training
+    # generate a batch from memmap dataset
+    # randomly indexes into each clip to select a training example
+    # offsets by self.hop for y_train
+    def audio_mmap_batch(self, index):
+      x_frames = np.zeros([self.batch_size, self.block_size])
+      y_frames = np.zeros([self.batch_size, self.block_size])
+
+      for i in range(self.batch_size):
+        # get the beginning sample index
+        clip_start = self.memmap_map[index + i]
+        # get the end sample index (where next clip starts in mmap map)
+        clip_length = self.memmap_map[index + i + 1] - clip_start
+        # generate random starting point to start taking clip from
+        rnd_idx = self.get_rand_clip_idx(clip_length)
+        # take clip from the randomly selected point (rnd_idx)
+        x_frames[i, :] = self.data[rnd_idx : rnd_idx + self.block_size]
+        y_frames[i, :] = self.data[rnd_idx + self.hop : rnd_idx + self.block_size + self.hop]
+
+      return x_frames, y_frames
+
+    # generates a batch from a loaded "ragged" numpy ndarray
+    # randomly indexes into each clip to select a training example
+    # offsets by self.hop for y_train
+    def audio_ndarray_batch(self, index):
+      audio_batch = self.data[index : index + self.batch_size]
+      x_frames = np.zeros([self.batch_size, self.block_size])
+      y_frames = np.zeros([self.batch_size, self.block_size])
+
+      for i, a in enumerate(audio_batch):
+        rand_idx = np.random.randint(0, high=get_rand_clip_idx(len(a)))
+        x_frames[i, :] = a[rand_idx : rand_idx + self.block_size]
+        y_frames[i, :] = a[rand_idx + self.hop : rand_idx + self.hop + self.block_size]
+      return x_frames, y_frames
+
+
+    # current way dataGen handles indexing in clips - randomly
+    # in the future, I would consider adding other methods of indexing besides random
+    def get_rand_clip_idx(self, clip_length):
+      return np.random.randint(0, high=clip_length-1-self.block_size-self.hop)
+
+    # main generator function called by training loop
     def generate(self):
+
       self.dataset_index = 0
+
       while True:
         if self.dataset_index+self.batch_size > self.num_examples:
           self.dataset_index = 0
 
-        audio_batch = self.data[self.dataset_index:self.dataset_index+self.batch_size]
-        x_frames = np.zeros([self.batch_size, self.block_size])
-        y_frames = np.zeros([self.batch_size, self.block_size])
+        # retrieve frames if using a memmap
+        if self.using_memmap:
+          x_frames, y_frames = self.audio_mmap_batch(self.dataset_index)
+        else: # retrieve frames if using ndarray (npy)
+          x_frames, y_frames = self.audio_ndarray_batch(self.dataset_index)
 
-        for i, a in enumerate(audio_batch):
-          rand_idx = np.random.randint(0, high=len(a)-1-self.block_size-self.hop)
-          x_frames[i, :] = a[rand_idx : rand_idx + self.block_size]
-          y_frames[i, :] = a[rand_idx + self.hop : rand_idx + self.hop + self.block_size]
-
+        # convert audio to an fft tensor with real and imag components on channel axis
         x = self.frames_to_fft_tensor(x_frames, window=True, center_fft=True)
         y = self.frames_to_fft_tensor(y_frames, window=True, center_fft=True)
+
         self.dataset_index += self.batch_size
+        
         yield x, y
 
 class Generators():
-    def __init__(self, dataset, batch_size, block_size, hop_ratio, offset):
+    def __init__(self, dataset, batch_size, block_size, hop_ratio, offset, normalize):
         self.train_DG, self.val_DG = self.create_generators(
             dataset, 
             batch_size, 
             block_size, 
             hop_ratio, 
-            offset)
+            offset,
+            normalize)
         
-    def create_generators(self, dataset, batch_size, block_size, hop_ratio, offset):
-        train_DG = DataGenerator(batch_size, block_size, 2, dataset.train_data, hop_ratio, offset)
-        val_DG = DataGenerator(batch_size, block_size, 2, dataset.val_data, hop_ratio, offset)
+    def create_generators(self, dataset, batch_size, block_size, hop_ratio, offset, normalize):
+        train_DG = DataGenerator(batch_size, block_size, 2, dataset.train_data, hop_ratio, offset, normalize, dataset.map_train)
+        val_DG = DataGenerator(batch_size, block_size, 2, dataset.val_data, hop_ratio, offset, normalize, dataset.map_val)
         return train_DG, val_DG

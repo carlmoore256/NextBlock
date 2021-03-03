@@ -1,3 +1,5 @@
+# NextBlock main CNN model
+
 from tensorflow.keras.models import save_model
 from tensorflow.keras.models import load_model
 from tensorflow.keras.optimizers import Adam
