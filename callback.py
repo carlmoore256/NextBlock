@@ -41,9 +41,10 @@ class NB_Callback(Callback):
         return
  
     def on_epoch_end(self, epoch, logs={}):
-        # if self.interval_count % self.test_interval == 0:
+        if self.interval_count % self.test_interval == 0:
+            self.plot_async()
         #   plots = Thread(target=self.plot_async, daemon=True)
-        # self.interval_count += 1
+        self.interval_count += 1
         return
  
     def on_batch_begin(self, batch, logs={}):

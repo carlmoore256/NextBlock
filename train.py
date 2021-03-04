@@ -1,8 +1,11 @@
+import tensorflow.keras.callbacks as tf_cb
 from data_gen import DataGenerator, Generators
 from models.nb_model import NB_Model
 from dataset import CambridgeDataset
 from callback import NB_Callback
+from datetime import datetime
 import argparse
+import os
 
 
 parser = argparse.ArgumentParser()
@@ -15,8 +18,8 @@ parser.add_argument("-e", type=int, default=100, help="epochs")
 parser.add_argument("-lr", type=float, default=1e-4, help="learning rate")
 parser.add_argument("-sr", type=int, default=44100, help="samplerate")
 
-parser.add_argument("-blocksize", type=int, default=32, help="audio block size")
-parser.add_argument("-hopratio", type=int, default=32, help="hop size as ratio, hop in samples = block size / hop")
+parser.add_argument("-blocksize", type=int, default=256, help="audio block size")
+parser.add_argument("-hopratio", type=int, default=2, help="hop size as ratio, hop in samples = block size / hop")
 parser.add_argument("-predictoffset", type=int, default=1, help="number of hops ahead for model to predict during training")
 parser.add_argument("-normalize", type=bool, default=True, help="normalize fft to 1/fftsize")
 
@@ -95,10 +98,18 @@ cb = NB_Callback(generators.val_DG,
                 nb_model,
                 num_tests=1,
                 test_interval=10,
-                save_audio=True)
+                save_audio=False)
 
 ################## Fit Model ####################
 
-nb_model.fit(generators, num_epochs, callbacks=[cb])
+now = datetime.now()
+logdir = "./tf_logs/" + now.strftime("%Y%m%d-%H%M%S") + "/"
+os.mkdir(logdir)
+
+nb_model.fit(generators, 
+            num_epochs, 
+            callbacks=[cb, 
+                      # tf_cb.ModelCheckpoint(filepath='E:\Datasets\VoxVerified\checkpoints\model.{epoch:02d}-{val_loss:.2f}.h5',save_freq='epoch'),
+                      tf_cb.TensorBoard(log_dir=logdir)])
 
 nb_model.save()

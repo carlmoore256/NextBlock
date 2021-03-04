@@ -4,3 +4,6 @@ preprocessing.py
 __pycache__
 training_clips
 .vscode/
+logs/
+checkpoints/
+tf_logs/
