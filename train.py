@@ -23,6 +23,11 @@ parser.add_argument("-hopratio", type=int, default=2, help="hop size as ratio, h
 parser.add_argument("-predictoffset", type=int, default=1, help="number of hops ahead for model to predict during training")
 parser.add_argument("-normalize", type=bool, default=True, help="normalize fft to 1/fftsize")
 
+# model creation parameters - defaults determined by some global optimization done a while back, but by no means the right answer
+parser.add_argument("--iofilt", type=int, default=32, help="number of filters on outer-most layers")
+parser.add_argument("--bottleneck", type=int, default=8, help="size of latent dimension")
+parser.add_argument("--bias", type=bool, default=True, help="use bias")
+
 args = parser.parse_args()
 
 
@@ -83,10 +88,10 @@ nb_model = NB_Model(input_shape=[block_size//2,2],
 if load_model == '':
   nb_model.create_unet_fft(
                       lr=learning_rate, 
-                      filters=512, # num filters on input & output layers
+                      filters=args.iofilt, # num filters on input & output layers
                       kernel_size=kernel_size, 
-                      bottleneck=8, # size of the network's latent dimension
-                      use_bias=False, 
+                      bottleneck=args.bottleneck, # size of the network's latent dimension
+                      use_bias=args.bias, 
                       strides=2, 
                       activation='tanh')
 else:
@@ -108,7 +113,8 @@ os.mkdir(logdir)
 
 nb_model.fit(generators, 
             num_epochs, 
-            callbacks=[cb, 
+            callbacks=[
+                      cb, 
                       # tf_cb.ModelCheckpoint(filepath='E:\Datasets\VoxVerified\checkpoints\model.{epoch:02d}-{val_loss:.2f}.h5',save_freq='epoch'),
                       tf_cb.TensorBoard(log_dir=logdir)])
 

@@ -30,7 +30,7 @@ def create_model(input_shape, filters,
                                        activation, use_bias,
                                        upsampling=False)
   encoder_layers.append(encoder)
-  current_filt = filters//2
+  current_filt = filters*2
 
   while output_shape[1] > bottleneck:
     encoder, output_shape = create_layer(encoder, current_filt, 
@@ -38,13 +38,13 @@ def create_model(input_shape, filters,
                                          activation, use_bias,
                                          upsampling=False)
     encoder_layers.append(encoder)
-    current_filt = current_filt//2
+    current_filt = current_filt*2
 
   decoder, output_shape = create_layer(encoder, bottleneck, 
                                        kernel_size, strides, 
                                        activation, use_bias,
                                        upsampling=False)
-  current_filt *= 2
+  current_filt /= 2
 
   layers_out = 0
   while output_shape[1] < input_shape[0]//2:
@@ -59,7 +59,7 @@ def create_model(input_shape, filters,
 
     layers_out += 1
     
-    current_filt *= 2
+    current_filt /= 2
   
   model_output, _ = create_layer(decoder, 2, kernel_size, 
                                  strides, activation, use_bias,

@@ -7,3 +7,5 @@ training_clips
 logs/
 checkpoints/
 tf_logs/
+saved/
+models/__pycache__/

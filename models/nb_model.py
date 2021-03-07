@@ -4,7 +4,7 @@ from tensorflow.keras.models import save_model
 from tensorflow.keras.models import load_model
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint
-import models.unet_fft as unet_fft
+import models.unet_fft_deep_skips as unet_fft
 
 class NB_Model():
 
