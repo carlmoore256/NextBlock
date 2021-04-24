@@ -84,7 +84,7 @@ class CambridgeDataset():
     assert(len(files)>0)
     print(f"num chunks found: {len(files)}")
 
-    if shuffle:
+    if shuffle_chunks:
       random.shuffle(files)
       
     chunks = []
