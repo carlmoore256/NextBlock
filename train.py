@@ -10,7 +10,7 @@ import os
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("-dataset", type=str, default='E:/Datasets/VoxVerified', help="path to dataset")
+parser.add_argument("-dataset", type=str, default='F:/Datasets/VoxVerified', help="path to dataset")
 parser.add_argument("-model", type=str, default='', help="path to existing model to load")
 parser.add_argument("-b", type=int, default=32, help="batch size")
 parser.add_argument("-k", type=int, default=9, help="kernel size")
